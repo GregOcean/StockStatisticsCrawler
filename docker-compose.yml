@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: stock_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: stock_data
+      MYSQL_USER: stock_user
+      MYSQL_PASSWORD: stock_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - stock_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock_crawler
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: stock_user
+      DB_PASSWORD: stock_password
+      DB_NAME: stock_data
+      STOCK_SYMBOLS: AAPL,MSFT,GOOGL,AMZN,TSLA,NVDA,META,NFLX
+      FETCH_SCHEDULE: "0 0 * * *"  # Daily at midnight
+      LOG_LEVEL: INFO
+      DEFAULT_DATA_SOURCE: yfinance
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - stock_network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+
+networks:
+  stock_network:
+    driver: bridge
+
