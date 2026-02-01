@@ -1,5 +1,6 @@
 # Data fetching
 yfinance==0.2.37
+requests>=2.31.0
 
 # Database
 SQLAlchemy==2.0.25

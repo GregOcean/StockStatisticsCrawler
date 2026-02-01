@@ -2,6 +2,7 @@
 
 from .base import BaseStorage
 from .mysql_storage import MySQLStorage
+from .raw_storage import RawDataStorage
 
-__all__ = ["BaseStorage", "MySQLStorage"]
+__all__ = ["BaseStorage", "MySQLStorage", "RawDataStorage"]
 

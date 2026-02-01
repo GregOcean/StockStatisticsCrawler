@@ -39,7 +39,11 @@ class StockCrawlerApp:
             
             # Initialize data source
             logger.info(f"Initializing data source: {self.settings.default_data_source}")
-            self.data_source = YFinanceDataSource()
+            self.data_source = YFinanceDataSource(
+                request_delay=self.settings.api_request_delay,
+                max_retries=self.settings.api_max_retries,
+                retry_delay=self.settings.api_retry_delay
+            )
             
             if not self.data_source.is_available():
                 logger.error("Data source is not available")
@@ -47,7 +51,7 @@ class StockCrawlerApp:
             
             # Initialize storage
             logger.info("Initializing storage...")
-            self.storage = MySQLStorage(self.settings.database_url)
+            self.storage = MySQLStorage(self.settings.get_database_url())
             
             if not self.storage.connect():
                 logger.error("Failed to connect to storage")

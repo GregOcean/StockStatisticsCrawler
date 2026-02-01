@@ -1,6 +1,7 @@
 """Application settings and configuration"""
 
-from typing import List
+from __future__ import annotations
+from typing import List, Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,11 +17,18 @@ class Settings(BaseSettings):
     )
     
     # Database configuration
+    # Option 1: Use individual fields
     db_host: str = Field(default="localhost", description="Database host")
     db_port: int = Field(default=3306, description="Database port")
     db_user: str = Field(default="root", description="Database user")
-    db_password: str = Field(default="", description="Database password")
+    db_password: str = Field(default="", description="Database password (store in .env, not in code)")
     db_name: str = Field(default="stock_data", description="Database name")
+    
+    # Option 2: Use full connection URL (takes precedence if provided)
+    database_url: Optional[str] = Field(
+        default=None, 
+        description="Full database URL (e.g., mysql+pymysql://user:pass@host:port/dbname)"
+    )
     
     # Scheduler configuration
     fetch_schedule: str = Field(
@@ -43,9 +51,41 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = Field(default="INFO", description="Logging level")
     
-    @property
-    def database_url(self) -> str:
-        """Generate database connection URL"""
+    # API Rate Limiting
+    api_request_delay: float = Field(
+        default=2.0,
+        description="Delay in seconds between API requests"
+    )
+    api_max_retries: int = Field(
+        default=5,
+        description="Maximum number of retries for failed requests"
+    )
+    api_retry_delay: float = Field(
+        default=10.0,
+        description="Base delay in seconds between retries"
+    )
+    
+    # Alpha Vantage configuration
+    alphavantage_api_key: str = Field(
+        default="",
+        description="Alpha Vantage API key (optional, for Alpha Vantage data source)"
+    )
+    alphavantage_enabled: bool = Field(
+        default=False,
+        description="Enable Alpha Vantage as fallback data source"
+    )
+    
+    def get_database_url(self) -> str:
+        """
+        Get database connection URL
+        
+        Priority:
+        1. Use DATABASE_URL if provided in .env
+        2. Otherwise, build from individual fields (DB_HOST, DB_USER, etc.)
+        """
+        if self.database_url:
+            return self.database_url
+        
         return (
             f"mysql+pymysql://{self.db_user}:{self.db_password}"
             f"@{self.db_host}:{self.db_port}/{self.db_name}"
@@ -58,7 +98,7 @@ class Settings(BaseSettings):
 
 
 # Singleton instance
-_settings: Settings | None = None
+_settings: Optional[Settings] = None
 
 
 def get_settings() -> Settings:

@@ -16,7 +16,7 @@ from src.storage import MySQLStorage
 def show_stats():
     """Show database statistics"""
     settings = get_settings()
-    storage = MySQLStorage(settings.database_url)
+    storage = MySQLStorage(settings.get_database_url())
     
     if not storage.connect():
         print("Failed to connect to database")
@@ -79,7 +79,7 @@ def add_symbols(symbols: list):
 def query_latest(symbol: str):
     """Query latest data for a symbol"""
     settings = get_settings()
-    storage = MySQLStorage(settings.database_url)
+    storage = MySQLStorage(settings.get_database_url())
     
     if not storage.connect():
         print("Failed to connect to database")
